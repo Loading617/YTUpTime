@@ -17,7 +17,7 @@ function getUploadDateFromYtInitialData() {
   }
   
   function addUploadTime() {
-    const existing = document.getElementById("upload-time-extension");
+    const existing = document.getElementById("ytuptime-extension");
     if (existing) return;
   
     const uploadDate = getUploadDateFromYtInitialData();
@@ -27,7 +27,7 @@ function getUploadDateFromYtInitialData() {
     const infoSection = document.querySelector("#info-strings");
     if (infoSection) {
       const timeElement = document.createElement("div");
-      timeElement.id = "upload-time-extension";
+      timeElement.id = "ytuptime-extension";
       timeElement.textContent = `Uploaded on: ${uploadTime}`;
       timeElement.className = "upload-time-style";
       infoSection.appendChild(timeElement);
