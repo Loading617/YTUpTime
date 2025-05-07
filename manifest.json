@@ -1,0 +1,14 @@
+{
+    "manifest_version": 3,
+    "name": "YTUpTime",
+    "version": "1.0",
+    "description": "Show the exact upload time of YouTube videos.",
+    "permissions": ["scripting"],
+    "content_scripts": [
+      {
+        "matches": ["https://www.youtube.com/watch*"],
+        "js": ["content.js"],
+        "css": ["styles.css"]
+      }
+    ]
+  }
