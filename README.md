@@ -1,2 +1,2 @@
 # YTUpTime
-YouTube Upload Time Extension
+Time of Upload YouTube Video Extension
