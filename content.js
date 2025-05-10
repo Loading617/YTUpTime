@@ -1,44 +1,66 @@
-function getUploadDateFromYtInitialData() {
-    const scripts = [...document.scripts];
-    for (const script of scripts) {
-      if (script.textContent.includes("var ytInitialPlayerResponse")) {
-        const match = script.textContent.match(/ytInitialPlayerResponse\s*=\s*(\{.*?\});/s);
-        if (match) {
-          try {
-            const data = JSON.parse(match[1]);
-            return data?.microformat?.playerMicroformatRenderer?.uploadDate;
-          } catch (e) {
-            console.error("Failed to parse uploadDate", e);
-          }
-        }
-      }
-    }
+function getVideoId() {
+  const url = new URL(window.location.href);
+  return url.searchParams.get("v");
+}
+
+function formatRelativeTime(dateStr) {
+  const uploadDate = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now - uploadDate;
+  const seconds = Math.floor(diffMs / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+
+  if (seconds < 60) return "just now";
+  if (minutes < 60) return `${minutes} minute${minutes === 1 ? '' : 's'} ago`;
+  if (hours < 24) return `${hours} hour${hours === 1 ? '' : 's'} ago`;
+  return `${days} day${days === 1 ? '' : 's'} ago`;
+}
+
+async function fetchUploadTime(videoId) {
+  const endpoint = `https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${videoId}&key=${YOUTUBE_API_KEY}`;
+  try {
+    const res = await fetch(endpoint);
+    const data = await res.json();
+    return data.items?.[0]?.snippet?.publishedAt;
+  } catch (err) {
+    console.error("Failed to fetch upload time:", err);
     return null;
   }
-  
-  function addUploadTime() {
-    const existing = document.getElementById("ytuptime-extension");
-    if (existing) return;
-  
-    const uploadDate = getUploadDateFromYtInitialData();
-    if (!uploadDate) return;
-  
-    const uploadTime = new Date(uploadDate).toLocaleString();
-    const infoSection = document.querySelector("#info-strings");
-    if (infoSection) {
-      const timeElement = document.createElement("div");
-      timeElement.id = "ytuptime-extension";
-      timeElement.textContent = `Uploaded on: ${uploadTime}`;
-      timeElement.className = "upload-time-style";
-      infoSection.appendChild(timeElement);
-    }
-  }
-  
-  const observer = new MutationObserver(() => {
-    if (location.href.includes("/watch")) {
-      setTimeout(addUploadTime, 1000);
-    }
+}
+
+async function injectCustomUploadTime() {
+  const videoId = getVideoId();
+  if (!videoId) return;
+
+  const uploadTimeISO = await fetchUploadTime(videoId);
+  if (!uploadTimeISO) return;
+
+  const relativeTime = formatRelativeTime(uploadTimeISO);
+  const exactTime = new Date(uploadTimeISO).toLocaleString();
+
+  const replaceTarget = document.querySelector("#info-strings yt-formatted-string");
+  if (!replaceTarget) return;
+
+  replaceTarget.dataset.relativeTime = relativeTime;
+  replaceTarget.dataset.exactTime = exactTime;
+  replaceTarget.textContent = relativeTime;
+
+  const descObserver = new MutationObserver(() => {
+    const isExpanded = document.querySelector("#description #collapse") !== null;
+    replaceTarget.textContent = isExpanded ? exactTime : relativeTime;
   });
-  
-  observer.observe(document.body, { childList: true, subtree: true });
-  
+
+  const descContainer = document.querySelector("#description");
+  if (descContainer) {
+    descObserver.observe(descContainer, { childList: true, subtree: true });
+  }
+}
+
+const mainObserver = new MutationObserver(() => {
+  if (location.href.includes("/watch")) {
+    setTimeout(injectCustomUploadTime, 1000);
+  }
+});
+mainObserver.observe(document.body, { childList: true, subtree: true });
