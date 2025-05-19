@@ -3,3 +3,45 @@
     color: #888;
     margin-top: 4px;
   }
+
+body{
+    width: 40px;
+    overflow: hidden;
+}
+
+.hidden{
+    display: none;
+}
+
+.logo{
+    max-width: 40px;
+}
+
+.container{
+    font-size: small;
+    padding: 12px;
+}
+
+.button-container{
+    display: flex;
+    flex-wrap: wrap;
+    row-gap: 2px;
+    padding: 0 8px;
+}
+
+.button-container button{
+    flex-grow: 1;
+}
+
+.logo-button{
+    height: 0;
+    padding: 0;
+    transition: 
+        height 0.2s ease in,
+        margin-bottom 0.2s ease in;
+    overflow: hidden;
+    cursor: default;
+    background: var(--ytuptime-red);
+    color: var(--ytuptime-white);
+    flex-basis: 100%;
+}
