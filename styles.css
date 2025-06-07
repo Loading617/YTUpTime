@@ -1,25 +1,27 @@
-.upload-time-style {
-    font-size: 14px;
-    color: #888;
-    margin-top: 4px;
-  }
-
 body{
-    width: 40px;
-    overflow: hidden;
-}
-
-.hidden{
-    display: none;
+    width: 300px;
+    height: 400px;
+    background-color: #8a2be2;
+    font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+    text-align: center;
+    font-size: 12px;
 }
 
 .logo{
-    max-width: 40px;
+    width: 100px;
+    height: 100px;
 }
 
-.container{
-    font-size: small;
-    padding: 12px;
+.title{
+    color: #4b0082;
+}
+
+.developerName{
+    color: #4b0082;
+}
+
+.version{
+    color: #4b0082;
 }
 
 .button-container{
@@ -29,19 +31,32 @@ body{
     padding: 0 8px;
 }
 
-.button-container button{
-    flex-grow: 1;
+.help-button{
+    background-color: #4b0082;
+    color: #ffffff;
+    border: none;
+    border-radius: 5px;
+    padding: 5px 10px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
 }
 
-.logo-button{
-    height: 0;
-    padding: 0;
-    transition: 
-        height 0.2s ease in,
-        margin-bottom 0.2s ease in;
-    overflow: hidden;
-    cursor: default;
-    background: var(--ytuptime-red);
-    color: var(--ytuptime-white);
-    flex-basis: 100%;
+.github-button{
+    background-color: #4b0082;
+    color: #ffffff;
+    border: none;
+    border-radius: 5px;
+    padding: 5px 10px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.changelog-button{
+    background-color: #4b0082;
+    color: #ffffff;
+    border: none;
+    border-radius: 5px;
+    padding: 5px 10px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
 }
