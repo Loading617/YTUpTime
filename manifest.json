@@ -3,7 +3,25 @@
     "name": "YTUpTime",
     "version": "1.0",
     "description": "Show the exact upload time of YouTube videos.",
+    "homepage_url": "https://ytuptime.com",
+    "action": {
+      "default_popup": "index.html"
+    },
+    "icons": {
+      "16": "icons/ytuptime.png",
+      "32": "icons/ytuptime.png",
+      "48": "icons/ytuptime.png",
+      "128": "icons/ytuptime.png"
+    },
+    "options_page": {
+      "page": "options.html",
+      "open_in_tab": true
+    },
     "permissions": ["scripting"],
+    "host_permissions": ["https://www.youtube.com/*"],
+    "background": {
+      "service_worker": "background.js"
+    },
     "content_scripts": [
       {
         "matches": ["https://www.youtube.com/watch*"],
