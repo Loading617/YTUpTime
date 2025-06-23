@@ -26,7 +26,7 @@
       {
         "matches": ["https://www.youtube.com/watch*"],
         "js": ["content.js"],
-        "css": ["styles.css"]
+        "css": ["popup.css"]
       }
     ]
   }
