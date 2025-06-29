@@ -2,11 +2,23 @@
     "manifest_version": 3,
     "name": "YTUpTime",
     "version": "1.0",
-    "description": "Show the exact upload time of YouTube videos.",
-    "homepage_url": "https://ytuptime.com",
+    "permissions": ["tabs", "activeTab", "storage"],
+    "host_permissions": ["https://www.youtube.com/*"],
+        "background": {
+      "service_worker": "background.js"
+    },
+    "content_scripts": [
+      {
+        "matches": ["https://www.youtube.com/watch*"],
+        "js": ["content.js"],
+        "css": ["css/popup.css"]
+      }
+    ],
     "action": {
       "default_popup": "index.html"
     },
+    "description": "Show the exact upload time of YouTube videos.",
+    "homepage_url": "https://ytuptime.com",
     "icons": {
       "16": "icons/ytuptime.png",
       "32": "icons/ytuptime.png",
@@ -16,17 +28,5 @@
     "options_ui": {
       "page": "options.html",
       "open_in_tab": true
-    },
-    "permissions": ["scripting"],
-    "host_permissions": ["https://www.youtube.com/*"],
-    "background": {
-      "service_worker": "background.js"
-    },
-    "content_scripts": [
-      {
-        "matches": ["https://www.youtube.com/watch*"],
-        "js": ["content.js"],
-        "css": ["css/popup.css"]
-      }
-    ]
+    }
   }
