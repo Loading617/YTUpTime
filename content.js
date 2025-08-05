@@ -1,57 +1,74 @@
-function isYouTubeSearchPage() {
-  return location.hostname.includes('youtube.com') && location.pathname === '/results';
+function getVideoId() {
+  const url = new URL(window.location.href);
+  return url.searchParams.get("v");
 }
 
-function isYouTubeWatchPage() {
-  return location.hostname.includes('youtube.com') && location.pathname === '/watch';
-}
+async function fetchUploadTime(videoId) {
+  const endpoint = `https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${videoId}&key=${YOUTUBE_API_KEY}`;
+  const videoId = getVideoId();
+  if (!videoId) return;
 
-function injectAspectRatioToSearch() {
-  const items = document.querySelectorAll('#dismissible');
+  const uploadTimeISO = await fetchUploadTime(videoId);
+  if (uploadTimeISO) return;
 
-  items.forEach((item) => {
-    if (item.querySelector('.aspect-info')) return;
+  const relativeTime = formatRelativeTime(uploadTimeISO);
+  const exactTime = new Date(uploadTimeISO).toLocaleString();
 
-    const thumb = item.querySelector('ytd-thumbnail img');
-    if (thumb && thumb.width && thumb.height) {
-      const ratio = getAspectRatio(thumb.width, thumb.height);
-      const info = document.createElement('span');
-      info.className = 'aspect-info';
-      info.textContent = ` | Ratio: ${ratio}`;
-      info.style.color = '#aaa';
-      info.style.fontSize = '0.85rem';
-      const meta = item.querySelector('#metadata-line');
-      if (meta) meta.appendChild(info);
-    }
+  const replaceTarget = document.querySelector("#info-strings yt-formatted-strings");
+  if(!replaceTarget) return;
+
+  replaceTarget.dataset.relativeTime = relativeTime;
+  replaceTarget.dataset.exactTime = exactTime;
+  replaceTarget.textContent = relativeTime;
+  replaceTarget.title = exactTime;
+
+  const descObserver = new MutationObserver(() => {
+    const isExpanded = document.querySelector("#description #collapse") !== null;
+    replaceTarget.textContent = isExpanded ? exactTime : relativeTime;
+    replaceTarget.title = exactTime;
   });
-}
 
-function injectAspectRatioToDescription() {
-  const viewElem = document.querySelector('span.view-count');
-  if (!viewElem || document.getElementById('aspect-inline')) return;
+  const descContainer = document.querySelector("#description");
+  if (descContainer) {
+    descObserver.observe(descObserver, { childList: true, subtree: true });
+  }
 
-  const video = document.querySelector('video');
-  if (video && video.videoWidth && video.videoHeight) {
-    const ratio = getAspectRatio(video.videoWidth, video.videoHeight);
-    const span = document.createElement('span');
-    span.id = 'aspect-inline';
-    span.style.marginLeft = '10px';
-    span.style.color = '#ccc';
-    span.textContent = `Aspect Ratio: ${ratio}`;
-    viewElem.parentNode.insertBefore(span, viewElem.nextSibling);
+  try {
+    const res = await fetch(endpoint);
+    const data = await res.json();
+    return data.items?.[0]?.snippet?.publishedAt;
+  } catch (err) {
+    console.error("Failed to fetch upload time:", err);
+    return null;
   }
 }
 
-function observeChanges() {
-  const observer = new MutationObserver(() => {
-    if (isYouTubeSearchPage()) injectAspectRatioToSearch();
-    if (isYouTubeWatchPage()) injectAspectRatioToDescription();
-  });
+function displayUploadTime(datetime) {
+  if (document.getElementById("upload-time-extension")) return;
 
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true,
-  });
+  const time = new Date(datetime).toLocaleString();
+  const infoSection = document.querySelector("#info-strings");
+  if (infoSection) {
+    const timeEl = document.createElement("div");
+    timeEl.id = "upload-time-extension";
+    timeEl.className = "upload-time-style";
+    timeEl.textContent = `Uploaded on: ${time}`;
+    infoSection.appendChild(timeEl);
+  }
 }
 
-observeChanges();
+async function handleUploadTime() {
+  const videoId = getVideoId();
+  if (!videoId) return;
+
+  const time = await fetchUploadTime(videoId);
+  if (time) displayUploadTime(time);
+}
+
+const observer = new MutationObserver(() => {
+  if (location.href.includes("/watch")) {
+    setTimeout(handleUploadTime, 1000);
+  }
+});
+
+observer.observe(document.body, { childList: true, subtree: true });
