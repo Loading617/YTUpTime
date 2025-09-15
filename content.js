@@ -1,74 +1,74 @@
-function getVideoId() {
-  const url = new URL(window.location.href);
-  return url.searchParams.get("v");
+function getAspectRatio (w, h) {
+  const gcd = (a, b) => b ? gcd(b, a % b) : a;
+  const divisor = gcd(w, h);
+  return `${Math.round(w / divisor)}:${Math.round(h / divisor)}`;
 }
 
-async function fetchUploadTime(videoId) {
-  const endpoint = `https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${videoId}&key=${YOUTUBE_API_KEY}`;
-  const videoId = getVideoId();
-  if (!videoId) return;
+function isYouTubeSearchPage() {
+  return location.hostname.includes('youtube.com') && location.pathname === '/results';
+}
 
-  const uploadTimeISO = await fetchUploadTime(videoId);
-  if (uploadTimeISO) return;
+function isYouTubeWatchPage() {
+  return location.hostname.includes('youtube.com') && location.pathname === '/watch';
+}
 
-  const relativeTime = formatRelativeTime(uploadTimeISO);
-  const exactTime = new Date(uploadTimeISO).toLocaleString();
+function injectToSearchPage() {
+  const items = document.querySelectorAll('ytd-video-renderer');
 
-  const replaceTarget = document.querySelector("#info-strings yt-formatted-strings");
-  if(!replaceTarget) return;
+  items.forEach((item) => {
+    if (item.querySelector('.aspect-ratio-label')) return;
 
-  replaceTarget.dataset.relativeTime = relativeTime;
-  replaceTarget.dataset.exactTime = exactTime;
-  replaceTarget.textContent = relativeTime;
-  replaceTarget.title = exactTime;
-
-  const descObserver = new MutationObserver(() => {
-    const isExpanded = document.querySelector("#description #collapse") !== null;
-    replaceTarget.textContent = isExpanded ? exactTime : relativeTime;
-    replaceTarget.title = exactTime;
+    const img = item.querySelector('img');
+    if (img && img.width && img.height) {
+      const ratio = getAspectRatio(img.width, img.height);
+      const metaLine = item.querySelector('#metadata-line');
+      if (metaLine) {
+        const span = document.createElement('span');
+        span.className = 'aspect-ratio-label';
+        span.textContent = ` • Ratio: ${ratio}`;
+        span.style.color = '#aaa';
+        span.style.fontSize = '0.85rem';
+        metaLine.appendChild(span);
+      }
+    }
   });
-
-  const descContainer = document.querySelector("#description");
-  if (descContainer) {
-    descObserver.observe(descObserver, { childList: true, subtree: true });
-  }
-
-  try {
-    const res = await fetch(endpoint);
-    const data = await res.json();
-    return data.items?.[0]?.snippet?.publishedAt;
-  } catch (err) {
-    console.error("Failed to fetch upload time:", err);
-    return null;
-  }
 }
 
-function displayUploadTime(datetime) {
-  if (document.getElementById("upload-time-extension")) return;
-
-  const time = new Date(datetime).toLocaleString();
-  const infoSection = document.querySelector("#info-strings");
-  if (infoSection) {
-    const timeEl = document.createElement("div");
-    timeEl.id = "upload-time-extension";
-    timeEl.className = "upload-time-style";
-    timeEl.textContent = `Uploaded on: ${time}`;
-    infoSection.appendChild(timeEl);
-  }
+function waitForElement(selector, callback) {
+  const interval = setInterval(() => {
+    const elem = document.querySelector(selector);
+    if (elem) {
+      clearInterval(interval);
+      callback(elem);
+    }
+  }, 500);
 }
 
-async function handleUploadTime() {
-  const videoId = getVideoId();
-  if (!videoId) return;
+function injectToWatchPage() {
+    const video = document.querySelector('video');
+  const viewElem = document.querySelector('span.view-count');
+  
+  if (!video || !viewElem) return;
 
-  const time = await fetchUploadTime(videoId);
-  if (time) displayUploadTime(time);
+  video.addEventListener('loadedmetadata' , () => {
+    const ratio = getAspectRatio(video.videoWidth, video.videoHeight);
+    if (!document.getElementById('aspect-ratio-label')) {
+    const span = document.createElement('span');
+    span.id = 'aspect-ratio-label';
+    span.textContent = ` • Aspect Ratio: ${ratio}`;
+    span.style.color = '#ccc';
+    span.style.marginLeft = '8px';
+    viewElem.appendChild(span);
+    }
+  });
 }
 
-const observer = new MutationObserver(() => {
-  if (location.href.includes("/watch")) {
-    setTimeout(handleUploadTime, 1000);
-  }
-});
+function runInjection() {
+  if (location.pathname === '/watch') injectToWatchPage();
+  if (location.pathname === '/results') injectToSearchPage();
+}
 
+const observer = new MutationObserver(runInjection);
 observer.observe(document.body, { childList: true, subtree: true });
+
+runInjection();
